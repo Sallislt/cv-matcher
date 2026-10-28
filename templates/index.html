@@ -94,6 +94,9 @@
             <button type="button" class="btn secondary" onclick="generate('/cover-letter', 'out-letter', this)">
                 ✉️ Parašyti motyvacinį laišką
             </button>
+            <button type="button" class="btn secondary" onclick="atsView(this)">
+                🔎 ATS peržiūra
+            </button>
             {% if result.company_name %}
             <button type="button" class="btn secondary" onclick="generate('/company', 'out-company', this)">
                 🏢 Įmonės klimatas (paieška)
@@ -104,6 +107,7 @@
         <div id="out-cv" class="output"></div>
         <div id="out-letter" class="output"></div>
         <div id="out-company" class="output"></div>
+        <div id="out-ats" class="output"></div>
     </section>
 
     <script>
@@ -145,6 +149,79 @@
             btn.textContent = 'Nukopijuota ✓';
             setTimeout(() => (btn.textContent = 'Kopijuoti'), 1500);
         });
+    }
+
+    function esc(s) {
+        const d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
+    }
+
+    function liList(arr) {
+        return (arr || []).map(x => '<li>' + esc(x) + '</li>').join('');
+    }
+
+    function tagList(arr, cls) {
+        return (arr || []).map(x => '<span class="tag ' + cls + '">' + esc(x) + '</span>').join('');
+    }
+
+    async function atsView(btn) {
+        const out = document.getElementById('out-ats');
+        btn.disabled = true;
+        out.innerHTML = '<div class="loading">Analizuojama, kaip jūsų CV mato ATS…</div>';
+        try {
+            const body = new URLSearchParams();
+            body.append('cv_text', CV_TEXT);
+            body.append('job_text', JOB_TEXT);
+            const resp = await fetch('/ats', { method: 'POST', body });
+            const res = await resp.json();
+            if (!res.ok) {
+                out.innerHTML = '<div class="alert">Klaida: ' + esc(res.error || 'nežinoma') + '</div>';
+                return;
+            }
+            const d = res.data;
+            let html = '<div class="ats-head"><strong>🔎 ATS peržiūra</strong>' +
+                '<span class="ats-score">Suderinamumas: ' + d.ats_score + '%</span></div>';
+
+            html += '<div class="ats-grid">';
+            html += '<div class="col"><h3>Ką atpažintų ATS</h3><table class="ats-fields">' +
+                '<tr><td>Vardas</td><td>' + esc(d.parsed_name || '—') + '</td></tr>' +
+                '<tr><td>El. paštas</td><td>' + esc(d.parsed_email || '—') + '</td></tr>' +
+                '<tr><td>Telefonas</td><td>' + esc(d.parsed_phone || '—') + '</td></tr>' +
+                '<tr><td>Pareigos</td><td>' + esc(d.parsed_title || '—') + '</td></tr>' +
+                '</table>';
+            if (d.parsed_skills && d.parsed_skills.length) {
+                html += '<p class="ats-sub">Įgūdžiai:</p><div class="tags">' + tagList(d.parsed_skills, 'ok') + '</div>';
+            }
+            html += '</div>';
+
+            html += '<div class="col warn"><h3>⚠️ Formatavimo įspėjimai</h3><ul>' +
+                (liList(d.format_warnings) || '<li>Didelių problemų nerasta.</li>') + '</ul></div>';
+            html += '</div>';
+
+            if ((d.keyword_matched && d.keyword_matched.length) || (d.keyword_missing && d.keyword_missing.length)) {
+                html += '<div class="block"><h3>Raktažodžių padengimas</h3>';
+                if (d.keyword_matched && d.keyword_matched.length)
+                    html += '<p class="ats-sub ok-t">Randama CV:</p><div class="tags">' + tagList(d.keyword_matched, 'ok') + '</div>';
+                if (d.keyword_missing && d.keyword_missing.length)
+                    html += '<p class="ats-sub warn-t">Trūksta:</p><div class="tags">' + tagList(d.keyword_missing, '') + '</div>';
+                html += '</div>';
+            }
+
+            if (d.fixes && d.fixes.length)
+                html += '<div class="block"><h3>🛠️ Pataisymai ATS filtrui</h3><ul>' + liList(d.fixes) + '</ul></div>';
+
+            html += '<div class="block"><h3>Grynas tekstas, kurį mato ATS</h3>' +
+                '<p class="hint">Jei čia tekstas iškraipytas ar susimaišęs – ATS jūsų CV nuskaito blogai.</p>' +
+                '<pre class="gen-text"></pre></div>';
+
+            out.innerHTML = html;
+            out.querySelector('.gen-text').textContent = CV_TEXT;
+        } catch (e) {
+            out.innerHTML = '<div class="alert">Tinklo klaida: ' + esc(e) + '</div>';
+        } finally {
+            btn.disabled = false;
+        }
     }
     </script>
     {% endif %}

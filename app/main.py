@@ -99,3 +99,13 @@ async def company(company_name: str = Form(""), job_text: str = Form("")):
         return JSONResponse({"ok": True, "text": text})
     except Exception as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=200)
+
+
+@app.post("/ats")
+async def ats(cv_text: str = Form(""), job_text: str = Form("")):
+    """Grąžina ATS peržiūrą: kaip CV perskaitytų atrankos sistema (JSON)."""
+    try:
+        data = matcher.ats_view(cv_text, job_text)
+        return JSONResponse({"ok": True, "data": data})
+    except Exception as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=200)

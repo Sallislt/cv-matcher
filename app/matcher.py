@@ -75,6 +75,52 @@ RESULT_TOOL = {
 }
 
 
+# „Tool“ schema ATS peržiūrai – kaip CV atrodo automatinei atrankos sistemai.
+ATS_TOOL = {
+    "name": "pateikti_ats",
+    "description": "Pateikia, kaip CV perskaitytų ATS (automatinė atrankos sistema).",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "ats_score": {
+                "type": "integer",
+                "description": "ATS suderinamumo įvertis nuo 0 iki 100.",
+            },
+            "parsed_name": {"type": "string", "description": "Atpažintas vardas (arba tuščia)."},
+            "parsed_email": {"type": "string", "description": "Atpažintas el. paštas (arba tuščia)."},
+            "parsed_phone": {"type": "string", "description": "Atpažintas telefonas (arba tuščia)."},
+            "parsed_title": {"type": "string", "description": "Atpažintos pareigos/profilis (arba tuščia)."},
+            "parsed_skills": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Įgūdžiai, kuriuos ATS ištrauktų iš CV.",
+            },
+            "format_warnings": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Formatavimo problemos, dėl kurių ATS gali blogai nuskaityti CV.",
+            },
+            "keyword_matched": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Skelbimo raktažodžiai, randami CV tekste.",
+            },
+            "keyword_missing": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Skelbimo raktažodžiai, kurių CV tekste nėra.",
+            },
+            "fixes": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Konkretūs pataisymai, kad CV geriau praeitų ATS filtrą.",
+            },
+        },
+        "required": ["ats_score", "format_warnings", "fixes"],
+    },
+}
+
+
 @dataclass
 class MatchResult:
     """Derinimo rezultatas, paruoštas rodymui šablone."""
@@ -183,6 +229,45 @@ def cover_letter(cv_text: str, job_text: str, company_name: str = "") -> str:
         messages=[{"role": "user", "content": prompt}],
     )
     return _text_from(message)
+
+
+def ats_view(cv_text: str, job_text: str = "") -> dict:
+    """Parodo, kaip CV perskaitytų ATS. Grąžina žodyną (struktūrizuotas rezultatas).
+
+    Pastaba: tai apytikslė simuliacija – tikri ATS (Workday, Taleo, Lever ir kt.)
+    skiriasi. Ištrauktas CV tekstas (rodomas atskirai) yra tai, ką ATS realiai mato.
+    """
+    if not cv_text.strip():
+        raise ValueError("CV tekstas tuščias.")
+
+    prompt = (
+        "Esi ATS (automatinės atrankos sistemos) simuliatorius. Žemiau pateiktas "
+        "GRYNAS tekstas, ištrauktas iš kandidato CV – būtent tiek „mato“ ATS. "
+        "Įvertink, kaip ATS perskaitytų šį CV: kokius laukus atpažintų, kokios "
+        "formatavimo problemos trukdo, ir kaip pagerinti. Jei pateiktas skelbimas, "
+        "patikrink raktažodžių padengimą (ATS ieško pažodžiui). Atsakyk ta pačia "
+        "kalba, kuria parašytas CV.\n\n"
+        f"=== IŠTRAUKTAS CV TEKSTAS ===\n{_clip(cv_text)}\n"
+    )
+    if job_text.strip():
+        prompt += f"\n=== DARBO SKELBIMAS ===\n{_clip(job_text)}\n"
+    prompt += "\nPateik rezultatą per įrankį „pateikti_ats“."
+
+    message = _client().messages.create(
+        model=DEFAULT_MODEL,
+        max_tokens=2000,
+        tools=[ATS_TOOL],
+        tool_choice={"type": "tool", "name": "pateikti_ats"},
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    for block in message.content:
+        if block.type == "tool_use" and block.name == "pateikti_ats":
+            data = dict(block.input)
+            data["ats_score"] = max(0, min(100, int(data.get("ats_score", 0))))
+            return data
+
+    raise RuntimeError("Modelis negrąžino ATS rezultato.")
 
 
 def company_insights(company_name: str, job_text: str = "") -> str:

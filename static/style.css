@@ -181,5 +181,17 @@ textarea { resize: vertical; }
 }
 .copy:hover { background: #475569; }
 
+/* ATS peržiūra */
+.ats-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: .5rem; }
+.ats-score { background: #312e81; color: #c7d2fe; padding: .3rem .8rem; border-radius: 999px; font-size: .85rem; font-weight: 600; }
+.ats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+.ats-fields { width: 100%; font-size: .9rem; border-collapse: collapse; }
+.ats-fields td { padding: .3rem 0; vertical-align: top; }
+.ats-fields td:first-child { color: var(--muted); width: 38%; }
+.ats-sub { margin: .8rem 0 .4rem; font-size: .85rem; color: var(--muted); }
+.ats-sub.ok-t { color: var(--ok); }
+.ats-sub.warn-t { color: var(--warn); }
+.tag.ok { background: #052e1a; color: var(--ok); border-color: #166534; }
+
 footer { text-align: center; color: var(--muted); font-size: .85rem; margin-top: 2rem; }
 footer a { color: var(--accent); }
