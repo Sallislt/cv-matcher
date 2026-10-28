@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtualios aplinkos
+.venv/
+venv/
+env/
+
+# Aplinkos kintamieji (tikras API raktas NEKeliamas)
+.env
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Įkelti failai / laikinieji
+uploads/
+*.log

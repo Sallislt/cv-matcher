@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CV Matcher – AI CV ir darbo skelbimo derinimas</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>CV Matcher</h1>
+        <p class="subtitle">AI įvertina, kiek jūsų CV atitinka darbo skelbimą</p>
+    </header>
+
+    {% if error %}
+    <div class="alert">{{ error }}</div>
+    {% endif %}
+
+    <form action="/analyze" method="post" enctype="multipart/form-data" class="card">
+        <div class="field">
+            <label for="cv_file">CV failas (PDF arba .txt)</label>
+            <input type="file" id="cv_file" name="cv_file" accept=".pdf,.txt,.md">
+            <p class="hint">Arba įklijuokite CV tekstą žemiau</p>
+            <textarea id="cv_text" name="cv_text" rows="6"
+                      placeholder="Įklijuokite CV tekstą...">{{ cv_text or "" }}</textarea>
+        </div>
+
+        <div class="field">
+            <label for="job_text">Darbo skelbimas</label>
+            <textarea id="job_text" name="job_text" rows="8" required
+                      placeholder="Įklijuokite darbo skelbimo tekstą...">{{ job_text or "" }}</textarea>
+        </div>
+
+        <button type="submit" class="btn">Analizuoti</button>
+    </form>
+
+    {% if result %}
+    <section class="card result">
+        <div class="score-row">
+            <div class="score-circle" style="--score: {{ result.match_score }}">
+                <span>{{ result.match_score }}%</span>
+            </div>
+            <div class="score-summary">
+                <h2>Atitikimas</h2>
+                <p>{{ result.summary }}</p>
+            </div>
+        </div>
+
+        {% if result.strengths %}
+        <div class="block">
+            <h3>✅ Stipriosios pusės</h3>
+            <ul>{% for s in result.strengths %}<li>{{ s }}</li>{% endfor %}</ul>
+        </div>
+        {% endif %}
+
+        {% if result.missing_keywords %}
+        <div class="block">
+            <h3>⚠️ Trūkstami raktiniai žodžiai / įgūdžiai</h3>
+            <div class="tags">
+                {% for k in result.missing_keywords %}<span class="tag">{{ k }}</span>{% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if result.suggestions %}
+        <div class="block">
+            <h3>💡 CV pataisymo pasiūlymai</h3>
+            <ul>{% for s in result.suggestions %}<li>{{ s }}</li>{% endfor %}</ul>
+        </div>
+        {% endif %}
+    </section>
+    {% endif %}
+
+    <footer>
+        <p>Varoma <a href="https://www.anthropic.com" target="_blank" rel="noopener">Anthropic Claude</a></p>
+    </footer>
+</div>
+</body>
+</html>
