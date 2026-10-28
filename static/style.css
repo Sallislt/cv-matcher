@@ -57,6 +57,34 @@ body::before {
     padding: 2rem 1rem 4rem;
 }
 
+/* Kalbų perjungiklis */
+.langbar { text-align: right; margin-bottom: .5rem; }
+#lang-select {
+    background: #04100a;
+    color: var(--cyber);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .35rem .6rem;
+    font-family: "Share Tech Mono", monospace;
+    font-size: .85rem;
+    cursor: pointer;
+}
+#lang-select:focus { outline: none; border-color: var(--cyber); box-shadow: var(--glow-cyan); }
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0);
+    white-space: nowrap; border: 0;
+}
+
+/* RTL (arabų kalba) pataisos */
+[dir="rtl"] .langbar { text-align: left; }
+[dir="rtl"] .subtitle::before { content: ""; }
+[dir="rtl"] label::before { content: ""; }
+[dir="rtl"] .metric { border-left: 1px solid var(--border); border-right: 3px solid var(--cyber); }
+[dir="rtl"] .block ul, [dir="rtl"] .col ul { padding-left: 0; padding-right: 1.2rem; }
+
 /* Antraštė su logotipu */
 header { text-align: center; margin-bottom: 2rem; }
 .brand { display: flex; align-items: center; justify-content: center; gap: .75rem; }

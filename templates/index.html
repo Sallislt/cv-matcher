@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="lt">
+<html lang="{{ lang }}" dir="{{ dir }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CV Matcher – AI CV ir darbo skelbimo derinimas</title>
+    <title>CV Matcher — AI CV ↔ job match</title>
     <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,12 +13,22 @@
 <body>
 <canvas id="matrix-bg" aria-hidden="true"></canvas>
 <div class="container">
+
+    <div class="langbar">
+        <label for="lang-select" class="sr-only">{{ t.lang_label }}</label>
+        <select id="lang-select" onchange="location.href='/?lang=' + this.value" aria-label="{{ t.lang_label }}">
+            {% for code, name in languages %}
+            <option value="{{ code }}" {% if code == lang %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
     <header>
         <div class="brand">
             <img src="/static/logo.svg" alt="" width="48" height="48">
             <h1>CV<span class="accent">_</span>Matcher</h1>
         </div>
-        <p class="subtitle">AI įvertina, kiek jūsų CV atitinka darbo skelbimą</p>
+        <p class="subtitle">{{ t.subtitle }}</p>
     </header>
 
     {% if error %}
@@ -27,20 +37,20 @@
 
     <form action="/analyze" method="post" enctype="multipart/form-data" class="card">
         <div class="field">
-            <label for="cv_file">CV failas (PDF arba .txt)</label>
+            <label for="cv_file">{{ t.cv_file_label }}</label>
             <input type="file" id="cv_file" name="cv_file" accept=".pdf,.txt,.md">
-            <p class="hint">Arba įklijuokite CV tekstą žemiau</p>
+            <p class="hint">{{ t.cv_or_hint }}</p>
             <textarea id="cv_text" name="cv_text" rows="6"
-                      placeholder="Įklijuokite CV tekstą...">{{ cv_text or "" }}</textarea>
+                      placeholder="{{ t.cv_placeholder }}">{{ cv_text or "" }}</textarea>
         </div>
 
         <div class="field">
-            <label for="job_text">Darbo skelbimas</label>
+            <label for="job_text">{{ t.job_label }}</label>
             <textarea id="job_text" name="job_text" rows="8" required
-                      placeholder="Įklijuokite darbo skelbimo tekstą...">{{ job_text or "" }}</textarea>
+                      placeholder="{{ t.job_placeholder }}">{{ job_text or "" }}</textarea>
         </div>
 
-        <button type="submit" class="btn">Analizuoti</button>
+        <button type="submit" class="btn">{{ t.analyze }}</button>
     </form>
 
     {% if result %}
@@ -50,23 +60,23 @@
                 <span>{{ result.match_score }}%</span>
             </div>
             <div class="score-summary">
-                <h2>Atitikimas</h2>
+                <h2>{{ t.match_h }}</h2>
                 <p>{{ result.verdict }}</p>
             </div>
         </div>
 
         <div class="metrics">
             <div class="metric">
-                <span class="metric-label">Alga (orientacinė)</span>
+                <span class="metric-label">{{ t.salary_label }}</span>
                 <span class="metric-value">{{ result.salary_range or "—" }}</span>
                 {% if result.salary_note %}<span class="metric-note">{{ result.salary_note }}</span>{% endif %}
             </div>
             <div class="metric">
-                <span class="metric-label">Atitikimas</span>
+                <span class="metric-label">{{ t.match_h }}</span>
                 <span class="metric-value">{{ result.match_score }}%</span>
             </div>
             <div class="metric">
-                <span class="metric-label">Įmonė</span>
+                <span class="metric-label">{{ t.company_label }}</span>
                 <span class="metric-value">{{ result.company_name or "—" }}</span>
             </div>
         </div>
@@ -74,13 +84,13 @@
         <div class="cols">
             {% if result.strengths %}
             <div class="col ok">
-                <h3>✅ Atitinka</h3>
+                <h3>{{ t.strengths_h }}</h3>
                 <ul>{% for s in result.strengths %}<li>{{ s }}</li>{% endfor %}</ul>
             </div>
             {% endif %}
             {% if result.missing_keywords %}
             <div class="col warn">
-                <h3>⚠️ Spragos</h3>
+                <h3>{{ t.gaps_h }}</h3>
                 <div class="tags">
                     {% for k in result.missing_keywords %}<span class="tag">{{ k }}</span>{% endfor %}
                 </div>
@@ -90,25 +100,17 @@
 
         {% if result.suggestions %}
         <div class="block">
-            <h3>💡 CV pataisymo pasiūlymai</h3>
+            <h3>{{ t.suggestions_h }}</h3>
             <ul>{% for s in result.suggestions %}<li>{{ s }}</li>{% endfor %}</ul>
         </div>
         {% endif %}
 
         <div class="actions">
-            <button type="button" class="btn" onclick="generate('/rewrite-cv', 'out-cv', this)">
-                📄 Perrašyti CV pagal skelbimą
-            </button>
-            <button type="button" class="btn secondary" onclick="generate('/cover-letter', 'out-letter', this)">
-                ✉️ Parašyti motyvacinį laišką
-            </button>
-            <button type="button" class="btn secondary" onclick="atsView(this)">
-                🔎 ATS peržiūra
-            </button>
+            <button type="button" class="btn" onclick="generate('/rewrite-cv', 'out-cv', this)">{{ t.act_rewrite }}</button>
+            <button type="button" class="btn secondary" onclick="generate('/cover-letter', 'out-letter', this)">{{ t.act_cover }}</button>
+            <button type="button" class="btn secondary" onclick="atsView(this)">{{ t.act_ats }}</button>
             {% if result.company_name %}
-            <button type="button" class="btn secondary" onclick="generate('/company', 'out-company', this)">
-                🏢 Įmonės klimatas (paieška)
-            </button>
+            <button type="button" class="btn secondary" onclick="generate('/company', 'out-company', this)">{{ t.act_company }}</button>
             {% endif %}
         </div>
 
@@ -119,16 +121,18 @@
     </section>
 
     <script>
-    // Paslėpti CV/skelbimo tekstai generavimo užklausoms (su pirmenybe ištrauktam CV).
+    // Sąsajos vertimai ir paslėpti CV/skelbimo tekstai generavimo užklausoms.
+    const T = {{ t | tojson }};
     const CV_TEXT = {{ (cv_content or cv_text or "") | tojson }};
     const JOB_TEXT = {{ (job_text or "") | tojson }};
     const COMPANY = {{ (result.company_name or "") | tojson }};
 
+    // Bendra generavimo funkcija: siunčia CV+skelbimą ir parodo grąžintą tekstą.
     async function generate(url, outId, btn) {
         const out = document.getElementById(outId);
         const label = btn.textContent.trim();
         btn.disabled = true;
-        out.innerHTML = '<div class="loading">Generuojama… tai gali užtrukti kelias sekundes</div>';
+        out.innerHTML = '<div class="loading">' + esc(T.loading) + '</div>';
         try {
             const body = new URLSearchParams();
             body.append('cv_text', CV_TEXT);
@@ -137,28 +141,30 @@
             const resp = await fetch(url, { method: 'POST', body });
             const data = await resp.json();
             if (data.ok) {
-                out.innerHTML = '<div class="gen-head"><strong>' + label +
-                    '</strong><button type="button" class="copy" onclick="copyText(this)">Kopijuoti</button></div>' +
+                out.innerHTML = '<div class="gen-head"><strong>' + esc(label) +
+                    '</strong><button type="button" class="copy" onclick="copyText(this)">' + esc(T.copy) + '</button></div>' +
                     '<pre class="gen-text"></pre>';
                 out.querySelector('.gen-text').textContent = data.text;
             } else {
-                out.innerHTML = '<div class="alert">Klaida: ' + (data.error || 'nežinoma') + '</div>';
+                out.innerHTML = '<div class="alert">' + esc(T.err_label) + ' ' + esc(data.error || '') + '</div>';
             }
         } catch (e) {
-            out.innerHTML = '<div class="alert">Tinklo klaida: ' + e + '</div>';
+            out.innerHTML = '<div class="alert">' + esc(T.err_net) + ' ' + esc(e) + '</div>';
         } finally {
             btn.disabled = false;
         }
     }
 
+    // Nukopijuoja sugeneruotą tekstą į iškarpinę.
     function copyText(btn) {
         const txt = btn.closest('.output').querySelector('.gen-text').textContent;
         navigator.clipboard.writeText(txt).then(() => {
-            btn.textContent = 'Nukopijuota ✓';
-            setTimeout(() => (btn.textContent = 'Kopijuoti'), 1500);
+            btn.textContent = T.copied;
+            setTimeout(() => (btn.textContent = T.copy), 1500);
         });
     }
 
+    // HTML kabučių ekranavimas (saugumui, kai kuriame turinį iš JS).
     function esc(s) {
         const d = document.createElement('div');
         d.textContent = s == null ? '' : String(s);
@@ -173,10 +179,11 @@
         return (arr || []).map(x => '<span class="tag ' + cls + '">' + esc(x) + '</span>').join('');
     }
 
+    // ATS peržiūra: parodo, kaip CV perskaitytų atrankos sistema.
     async function atsView(btn) {
         const out = document.getElementById('out-ats');
         btn.disabled = true;
-        out.innerHTML = '<div class="loading">Analizuojama, kaip jūsų CV mato ATS…</div>';
+        out.innerHTML = '<div class="loading">' + esc(T.ats_loading) + '</div>';
         try {
             const body = new URLSearchParams();
             body.append('cv_text', CV_TEXT);
@@ -184,49 +191,49 @@
             const resp = await fetch('/ats', { method: 'POST', body });
             const res = await resp.json();
             if (!res.ok) {
-                out.innerHTML = '<div class="alert">Klaida: ' + esc(res.error || 'nežinoma') + '</div>';
+                out.innerHTML = '<div class="alert">' + esc(T.err_label) + ' ' + esc(res.error || '') + '</div>';
                 return;
             }
             const d = res.data;
-            let html = '<div class="ats-head"><strong>🔎 ATS peržiūra</strong>' +
-                '<span class="ats-score">Suderinamumas: ' + d.ats_score + '%</span></div>';
+            let html = '<div class="ats-head"><strong>' + esc(T.act_ats) + '</strong>' +
+                '<span class="ats-score">' + esc(T.ats_compat) + ': ' + d.ats_score + '%</span></div>';
 
             html += '<div class="ats-grid">';
-            html += '<div class="col"><h3>Ką atpažintų ATS</h3><table class="ats-fields">' +
-                '<tr><td>Vardas</td><td>' + esc(d.parsed_name || '—') + '</td></tr>' +
-                '<tr><td>El. paštas</td><td>' + esc(d.parsed_email || '—') + '</td></tr>' +
-                '<tr><td>Telefonas</td><td>' + esc(d.parsed_phone || '—') + '</td></tr>' +
-                '<tr><td>Pareigos</td><td>' + esc(d.parsed_title || '—') + '</td></tr>' +
+            html += '<div class="col"><h3>' + esc(T.ats_recognize) + '</h3><table class="ats-fields">' +
+                '<tr><td>' + esc(T.f_name) + '</td><td>' + esc(d.parsed_name || '—') + '</td></tr>' +
+                '<tr><td>' + esc(T.f_email) + '</td><td>' + esc(d.parsed_email || '—') + '</td></tr>' +
+                '<tr><td>' + esc(T.f_phone) + '</td><td>' + esc(d.parsed_phone || '—') + '</td></tr>' +
+                '<tr><td>' + esc(T.f_title) + '</td><td>' + esc(d.parsed_title || '—') + '</td></tr>' +
                 '</table>';
             if (d.parsed_skills && d.parsed_skills.length) {
-                html += '<p class="ats-sub">Įgūdžiai:</p><div class="tags">' + tagList(d.parsed_skills, 'ok') + '</div>';
+                html += '<p class="ats-sub">' + esc(T.skills) + ':</p><div class="tags">' + tagList(d.parsed_skills, 'ok') + '</div>';
             }
             html += '</div>';
 
-            html += '<div class="col warn"><h3>⚠️ Formatavimo įspėjimai</h3><ul>' +
-                (liList(d.format_warnings) || '<li>Didelių problemų nerasta.</li>') + '</ul></div>';
+            html += '<div class="col warn"><h3>' + esc(T.warnings_h) + '</h3><ul>' +
+                (liList(d.format_warnings) || '<li>' + esc(T.no_major) + '</li>') + '</ul></div>';
             html += '</div>';
 
             if ((d.keyword_matched && d.keyword_matched.length) || (d.keyword_missing && d.keyword_missing.length)) {
-                html += '<div class="block"><h3>Raktažodžių padengimas</h3>';
+                html += '<div class="block"><h3>' + esc(T.kw_coverage) + '</h3>';
                 if (d.keyword_matched && d.keyword_matched.length)
-                    html += '<p class="ats-sub ok-t">Randama CV:</p><div class="tags">' + tagList(d.keyword_matched, 'ok') + '</div>';
+                    html += '<p class="ats-sub ok-t">' + esc(T.kw_found) + '</p><div class="tags">' + tagList(d.keyword_matched, 'ok') + '</div>';
                 if (d.keyword_missing && d.keyword_missing.length)
-                    html += '<p class="ats-sub warn-t">Trūksta:</p><div class="tags">' + tagList(d.keyword_missing, '') + '</div>';
+                    html += '<p class="ats-sub warn-t">' + esc(T.kw_missing) + '</p><div class="tags">' + tagList(d.keyword_missing, '') + '</div>';
                 html += '</div>';
             }
 
             if (d.fixes && d.fixes.length)
-                html += '<div class="block"><h3>🛠️ Pataisymai ATS filtrui</h3><ul>' + liList(d.fixes) + '</ul></div>';
+                html += '<div class="block"><h3>' + esc(T.fixes_h) + '</h3><ul>' + liList(d.fixes) + '</ul></div>';
 
-            html += '<div class="block"><h3>Grynas tekstas, kurį mato ATS</h3>' +
-                '<p class="hint">Jei čia tekstas iškraipytas ar susimaišęs – ATS jūsų CV nuskaito blogai.</p>' +
+            html += '<div class="block"><h3>' + esc(T.raw_text_h) + '</h3>' +
+                '<p class="hint">' + esc(T.raw_text_hint) + '</p>' +
                 '<pre class="gen-text"></pre></div>';
 
             out.innerHTML = html;
             out.querySelector('.gen-text').textContent = CV_TEXT;
         } catch (e) {
-            out.innerHTML = '<div class="alert">Tinklo klaida: ' + esc(e) + '</div>';
+            out.innerHTML = '<div class="alert">' + esc(T.err_net) + ' ' + esc(e) + '</div>';
         } finally {
             btn.disabled = false;
         }
@@ -235,27 +242,30 @@
     {% endif %}
 
     <footer>
-        <div class="author">Autorius: <span class="name">Saulius Stankevičius</span> · VILNIUS TECH</div>
+        <div class="author">
+            {{ t.author }} <span class="name">Saulius Stankevičius</span> ·
+            <a href="https://vilniustech.lt" target="_blank" rel="noopener">VILNIUS TECH</a>
+        </div>
         <div class="social">
-            <a href="{{ github_url or '#' }}" target="_blank" rel="noopener" aria-label="GitHub">
+            <a href="https://github.com/sallislt" target="_blank" rel="noopener" aria-label="GitHub">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.4-1.27.74-1.56-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>
                 GitHub
             </a>
-            <a href="{{ linkedin_url or '#' }}" target="_blank" rel="noopener" aria-label="LinkedIn">
+            <a href="https://www.linkedin.com/in/saulius-stankevicius/" target="_blank" rel="noopener" aria-label="LinkedIn">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z"/></svg>
                 LinkedIn
             </a>
-            <a href="mailto:{{ author_email or 'sallislt@gmail.com' }}" aria-label="El. paštas">
+            <a href="mailto:sallislt@gmail.com" aria-label="Email">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h20a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm10 7L3.5 6h17L12 11Zm0 2.2L3 7.3V18h18V7.3l-9 5.9Z"/></svg>
-                El. paštas
+                {{ t.f_email }}
             </a>
         </div>
-        <div class="powered">Varoma <a href="https://www.anthropic.com" target="_blank" rel="noopener">Anthropic Claude</a></div>
+        <div class="powered">{{ t.powered }} <a href="https://www.anthropic.com" target="_blank" rel="noopener">Anthropic Claude</a></div>
     </footer>
 </div>
 
 <script>
-// Matrix „lietaus“ fonas
+// Matrix „lietaus“ fonas: krentantys simboliai dekoratyviame drobės sluoksnyje.
 (function () {
     const c = document.getElementById('matrix-bg');
     if (!c) return;
