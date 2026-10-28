@@ -113,5 +113,73 @@ textarea { resize: vertical; }
     border: 1px solid #854d0e;
 }
 
+/* Metrikų kortelės */
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: .75rem;
+    margin: 1.5rem 0;
+}
+.metric {
+    background: #0f172a;
+    border-radius: 10px;
+    padding: .9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+}
+.metric-label { font-size: .8rem; color: var(--muted); }
+.metric-value { font-size: 1.25rem; font-weight: 600; color: #fff; }
+.metric-note { font-size: .75rem; color: var(--muted); }
+
+/* Atitinka / spragos stulpeliai */
+.cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+.col { background: #0f172a; border-radius: 10px; padding: 1rem 1.2rem; }
+.col h3 { margin: 0 0 .6rem; font-size: 1rem; }
+.col.ok h3 { color: var(--ok); }
+.col.warn h3 { color: var(--warn); }
+.col ul { margin: 0; padding-left: 1.1rem; }
+.col li { margin-bottom: .4rem; }
+
+/* Veiksmų mygtukai */
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.75rem; }
+.actions .btn { flex: 1; min-width: 200px; width: auto; }
+.btn.secondary { background: #334155; }
+.btn.secondary:hover { background: #475569; }
+.btn:disabled { opacity: .6; cursor: progress; }
+
+/* Generuoti rezultatai */
+.output { margin-top: 1rem; }
+.output:empty { margin: 0; }
+.loading { color: var(--muted); padding: 1rem; text-align: center; }
+.gen-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+.gen-text {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 1rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: inherit;
+    font-size: .9rem;
+    line-height: 1.6;
+    margin: 0;
+}
+.copy {
+    background: #334155;
+    color: var(--text);
+    border: none;
+    border-radius: 6px;
+    padding: .35rem .8rem;
+    font-size: .8rem;
+    cursor: pointer;
+}
+.copy:hover { background: #475569; }
+
 footer { text-align: center; color: var(--muted); font-size: .85rem; margin-top: 2rem; }
 footer a { color: var(--accent); }

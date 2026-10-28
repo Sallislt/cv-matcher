@@ -5,11 +5,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Form, Request, UploadFile
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.matcher import match_cv_to_job
+from app import matcher
 from app.pdf_utils import extract_text
 
 # Užkrauname .env (ANTHROPIC_API_KEY ir kt.).
@@ -51,12 +51,51 @@ async def analyze(
         error = "Įveskite darbo skelbimo tekstą."
     else:
         try:
-            result = match_cv_to_job(cv_content, job_text)
+            result = matcher.analyze(cv_content, job_text)
         except Exception as exc:  # Rodome draugišką klaidą naudotojui.
             error = f"Nepavyko atlikti analizės: {exc}"
 
+    # Perduodame CV ir skelbimo tekstą atgal, kad veiktų generavimo mygtukai.
     return templates.TemplateResponse(
         request,
         "index.html",
-        {"result": result, "error": error, "job_text": job_text, "cv_text": cv_text},
+        {
+            "result": result,
+            "error": error,
+            "job_text": job_text,
+            "cv_text": cv_text,
+            "cv_content": cv_content,
+        },
     )
+
+
+@app.post("/rewrite-cv")
+async def rewrite_cv(cv_text: str = Form(""), job_text: str = Form("")):
+    """Grąžina pritaikytą CV (JSON)."""
+    try:
+        text = matcher.rewrite_cv(cv_text, job_text)
+        return JSONResponse({"ok": True, "text": text})
+    except Exception as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=200)
+
+
+@app.post("/cover-letter")
+async def cover_letter(
+    cv_text: str = Form(""), job_text: str = Form(""), company_name: str = Form("")
+):
+    """Grąžina motyvacinį laišką (JSON)."""
+    try:
+        text = matcher.cover_letter(cv_text, job_text, company_name)
+        return JSONResponse({"ok": True, "text": text})
+    except Exception as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=200)
+
+
+@app.post("/company")
+async def company(company_name: str = Form(""), job_text: str = Form("")):
+    """Grąžina įmonės žvalgybos santrauką su interneto paieška (JSON)."""
+    try:
+        text = matcher.company_insights(company_name, job_text)
+        return JSONResponse({"ok": True, "text": text})
+    except Exception as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=200)

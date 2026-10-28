@@ -43,25 +43,42 @@
             </div>
             <div class="score-summary">
                 <h2>Atitikimas</h2>
-                <p>{{ result.summary }}</p>
+                <p>{{ result.verdict }}</p>
             </div>
         </div>
 
-        {% if result.strengths %}
-        <div class="block">
-            <h3>✅ Stipriosios pusės</h3>
-            <ul>{% for s in result.strengths %}<li>{{ s }}</li>{% endfor %}</ul>
-        </div>
-        {% endif %}
-
-        {% if result.missing_keywords %}
-        <div class="block">
-            <h3>⚠️ Trūkstami raktiniai žodžiai / įgūdžiai</h3>
-            <div class="tags">
-                {% for k in result.missing_keywords %}<span class="tag">{{ k }}</span>{% endfor %}
+        <div class="metrics">
+            <div class="metric">
+                <span class="metric-label">Alga (orientacinė)</span>
+                <span class="metric-value">{{ result.salary_range or "—" }}</span>
+                {% if result.salary_note %}<span class="metric-note">{{ result.salary_note }}</span>{% endif %}
+            </div>
+            <div class="metric">
+                <span class="metric-label">Atitikimas</span>
+                <span class="metric-value">{{ result.match_score }}%</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Įmonė</span>
+                <span class="metric-value">{{ result.company_name or "—" }}</span>
             </div>
         </div>
-        {% endif %}
+
+        <div class="cols">
+            {% if result.strengths %}
+            <div class="col ok">
+                <h3>✅ Atitinka</h3>
+                <ul>{% for s in result.strengths %}<li>{{ s }}</li>{% endfor %}</ul>
+            </div>
+            {% endif %}
+            {% if result.missing_keywords %}
+            <div class="col warn">
+                <h3>⚠️ Spragos</h3>
+                <div class="tags">
+                    {% for k in result.missing_keywords %}<span class="tag">{{ k }}</span>{% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
 
         {% if result.suggestions %}
         <div class="block">
@@ -69,7 +86,67 @@
             <ul>{% for s in result.suggestions %}<li>{{ s }}</li>{% endfor %}</ul>
         </div>
         {% endif %}
+
+        <div class="actions">
+            <button type="button" class="btn" onclick="generate('/rewrite-cv', 'out-cv', this)">
+                📄 Perrašyti CV pagal skelbimą
+            </button>
+            <button type="button" class="btn secondary" onclick="generate('/cover-letter', 'out-letter', this)">
+                ✉️ Parašyti motyvacinį laišką
+            </button>
+            {% if result.company_name %}
+            <button type="button" class="btn secondary" onclick="generate('/company', 'out-company', this)">
+                🏢 Įmonės klimatas (paieška)
+            </button>
+            {% endif %}
+        </div>
+
+        <div id="out-cv" class="output"></div>
+        <div id="out-letter" class="output"></div>
+        <div id="out-company" class="output"></div>
     </section>
+
+    <script>
+    // Paslėpti CV/skelbimo tekstai generavimo užklausoms (su pirmenybe ištrauktam CV).
+    const CV_TEXT = {{ (cv_content or cv_text or "") | tojson }};
+    const JOB_TEXT = {{ (job_text or "") | tojson }};
+    const COMPANY = {{ (result.company_name or "") | tojson }};
+
+    async function generate(url, outId, btn) {
+        const out = document.getElementById(outId);
+        const label = btn.textContent.trim();
+        btn.disabled = true;
+        out.innerHTML = '<div class="loading">Generuojama… tai gali užtrukti kelias sekundes</div>';
+        try {
+            const body = new URLSearchParams();
+            body.append('cv_text', CV_TEXT);
+            body.append('job_text', JOB_TEXT);
+            body.append('company_name', COMPANY);
+            const resp = await fetch(url, { method: 'POST', body });
+            const data = await resp.json();
+            if (data.ok) {
+                out.innerHTML = '<div class="gen-head"><strong>' + label +
+                    '</strong><button type="button" class="copy" onclick="copyText(this)">Kopijuoti</button></div>' +
+                    '<pre class="gen-text"></pre>';
+                out.querySelector('.gen-text').textContent = data.text;
+            } else {
+                out.innerHTML = '<div class="alert">Klaida: ' + (data.error || 'nežinoma') + '</div>';
+            }
+        } catch (e) {
+            out.innerHTML = '<div class="alert">Tinklo klaida: ' + e + '</div>';
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    function copyText(btn) {
+        const txt = btn.closest('.output').querySelector('.gen-text').textContent;
+        navigator.clipboard.writeText(txt).then(() => {
+            btn.textContent = 'Nukopijuota ✓';
+            setTimeout(() => (btn.textContent = 'Kopijuoti'), 1500);
+        });
+    }
+    </script>
     {% endif %}
 
     <footer>
