@@ -45,7 +45,7 @@ RESULT_TOOL = {
             },
             "company_name": {
                 "type": "string",
-                "description": "Įmonės pavadinimas iš skelbimo (jei nurodytas, kitaip tuščia).",
+                "description": "Įmonės pavadinimas iš skelbimo. Būtinai ištrauk, jei jis minimas (dažnai antraštėje ar pirmame sakinyje); jei tikrai nėra – tuščia.",
             },
             "strengths": {
                 "type": "array",
@@ -67,6 +67,7 @@ RESULT_TOOL = {
             "match_score",
             "verdict",
             "salary_range",
+            "company_name",
             "strengths",
             "missing_keywords",
             "suggestions",
@@ -171,7 +172,7 @@ def analyze(cv_text: str, job_text: str) -> MatchResult:
         model=DEFAULT_MODEL,
         max_tokens=2000,
         tools=[RESULT_TOOL],
-        tool_choice={"type": "tool", "name": "pateikti_rezultata"},
+        tool_choice={"type": "auto"},
         messages=[{"role": "user", "content": prompt}],
     )
 
@@ -257,7 +258,7 @@ def ats_view(cv_text: str, job_text: str = "") -> dict:
         model=DEFAULT_MODEL,
         max_tokens=2000,
         tools=[ATS_TOOL],
-        tool_choice={"type": "tool", "name": "pateikti_ats"},
+        tool_choice={"type": "auto"},
         messages=[{"role": "user", "content": prompt}],
     )
 
@@ -296,7 +297,7 @@ def company_insights(company_name: str, job_text: str = "") -> str:
     message = _client().messages.create(
         model=DEFAULT_MODEL,
         max_tokens=1500,
-        tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 4}],
+        tools=[{"type": "web_search_20260209", "name": "web_search", "max_uses": 4}],
         messages=[{"role": "user", "content": prompt}],
     )
     return _text_from(message)
