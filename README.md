@@ -121,7 +121,7 @@ The code is documented throughout with inline comments and docstrings
 
 ## Author
 
-**Saulius Stankevičius** · VILNIUS TECH
+**Saulius Stankevičius**
 [GitHub](https://github.com/sallislt) ·
 [LinkedIn](https://www.linkedin.com/in/saulius-stankevicius/)
 
